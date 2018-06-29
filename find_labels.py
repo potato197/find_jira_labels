@@ -9,10 +9,9 @@ from urllib.error import  URLError
 from http import cookiejar
 from login_jira import get_cookie
 
-def get_label_list(filter_id):
+def get_label_list(jia_domain,filter_id):
     ssl._create_default_https_context = ssl._create_unverified_context
 
-    jia_domain="https://idarttest.mot.com/"
     header_dict = {'Content-Type': 'application/json'}
     data_url=jia_domain+"rest/gadget/1.0/piechart/generate?projectOrFilterId=filter-"+str(filter_id)+"&statType=labels&returnData=true"
     req = request.Request(url=data_url,headers=header_dict)
@@ -41,53 +40,63 @@ def get_label_list(filter_id):
 ##    print(label_list)
     return True,label_list
 
-filter_id=136250
-result,label_list=get_label_list(filter_id)
-if(result==False):
-    sys.exit()
-#print(label_list)
-print("Get list succeed!")
+def find_labels(jia_domain,filter_id,argv_list):
+    print("jia_domain=%s" %(jia_domain))
+    print("filter_id=%d" %(filter_id))
+    result,label_list=get_label_list(jia_domain,filter_id)
+    if(result==False):
+        sys.exit()
+    #print(label_list)
+    print("Get list succeed!")
 
-result=[]
-for i in range(1,len(sys.argv)):
-    print('args[%d]=%s'%(i,sys.argv[i]))
-#key_xxx
-    rex="^"+sys.argv[i]+"_.+"
-    pattern=re.compile(rex)
-    for label in label_list:
-        if pattern.match(label):
-            result=result+[label]
-#xxx_key_xxx
-    rex=".+_"+sys.argv[i]+"_.+"
-    pattern=re.compile(rex)
-    for label in label_list:
-        if pattern.match(label):
-            result=result+[label]
-#xxx_key
-    rex=".+_"+sys.argv[i]+"$"
-    pattern=re.compile(rex)
-    for label in label_list:
-        if pattern.match(label):
-            result=result+[label]
-#key
-    rex="^"+sys.argv[i]+"$"
-    pattern=re.compile(rex)
-    for label in label_list:
-        if pattern.match(label):
-            result=result+[label]
-            break
-##result=list(set(result))
-result.sort()
-print(result)
+    result=[]
+    for argv in argv_list:
+        print('argv=%s'%(argv))
+    #key_xxx
+        rex="^"+argv+"_.+"
+        pattern=re.compile(rex)
+        for label in label_list:
+            if pattern.match(label):
+                result=result+[label]
+    #xxx_key_xxx
+        rex=".+_"+argv+"_.+"
+        pattern=re.compile(rex)
+        for label in label_list:
+            if pattern.match(label):
+                result=result+[label]
+    #xxx_key
+        rex=".+_"+argv+"$"
+        pattern=re.compile(rex)
+        for label in label_list:
+            if pattern.match(label):
+                result=result+[label]
+    #key
+        rex="^"+argv+"$"
+        pattern=re.compile(rex)
+        for label in label_list:
+            if pattern.match(label):
+                result=result+[label]
+                break
+    ##result=list(set(result))
+    result.sort()
+    print(result)
 
-fw = open("labels.txt", "w")
-fw.write(str(result))
-fw.close()
+    fw = open("labels.txt", "w")
+    fw.write(str(result))
+    fw.close()
 
-out_list=""
-for sub_str in result:
-    out_list=out_list+sub_str+"\n"
-    
-fw = open("labels_list.txt", "w")
-fw.write(out_list)
-fw.close()
+    out_list=""
+    for sub_str in result:
+        out_list=out_list+sub_str+"\n"
+        
+    fw = open("labels_list.txt", "w")
+    fw.write(out_list)
+    fw.close()
+
+if __name__ == "__main__":
+    jia_domain="https://idarttest.mot.com/"
+    filter_id=136250 ###Please change to the real value.##
+    argv_list = sys.argv[1:]
+    if len(argv_list)==0:
+        argv_list=['top']
+    find_labels(jia_domain,filter_id,argv_list)
